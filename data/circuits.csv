@@ -73,3 +73,5 @@ circuitId,circuitRef,name,location,country,lat,lng,alt,url
 72,"port_imperial","Port Imperial Street Circuit","New Jersey","USA",40.7769,-74.0111,\N,"http://en.wikipedia.org/wiki/Port_Imperial_Street_Circuit"
 73,"BAK","Baku City Circuit","Baku","Azerbaijan",40.3725,49.8533,\N,"http://en.wikipedia.org/wiki/Baku_City_Circuit"
 74,"hanoi","Hanoi Street Circuit","Hanoi","Vietnam",21.0166,105.766,\N,"http://en.wikipedia.org/wiki/Hanoi_Street_Circuit"
+75,"portimao","Autódromo Internacional do Algarve","Portimão","Portugal",37.227,-8.6267,\N,"http://en.wikipedia.org/wiki/Algarve_International_Circuit"
+76,"mugello","Autodromo Internazionale del Mugello","Mugello","Italy",43.9975,11.3719,\N,"http://en.wikipedia.org/wiki/Mugello_Circuit"
