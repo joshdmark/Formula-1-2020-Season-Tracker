@@ -60,8 +60,15 @@ f1_2020 <- f1_2020 %>%
   mutate(ytd_rank = frankv(ytd_pts*-1, ties.method = 'random')) %>% 
   ungroup() %>% data.frame()
 
-team_grid_starts <- f1_2020 %>% select(race_dt = date, constructor_name, driver_name, grid) %>% arrange(race_dt)
+## qualifying results by driver per race 
+team_grid_starts <- f1_2020 %>% 
+  select(race_dt = date, constructor_name, driver_name, grid) %>% 
+  arrange(race_dt)
+
+## lineups per team, drivers in each team 
 team_lineups <- team_grid_starts %>% select(constructor_name, driver_name) %>% distinct()
+
+## wide format team lineups (each driver & their teammates)
 team_pairings <- suppressWarnings(sqldf("select t1.*, t2.driver_name as d2
            from team_lineups t1 
            left join team_lineups t2 
@@ -74,6 +81,7 @@ team_pairings <- suppressWarnings(sqldf("select t1.*, t2.driver_name as d2
   data.frame() %>% 
   separate(teammates, into = c('teammate1', 'teammate2'), sep = ', '))
 
+## add teammates to data 
 qual_grid <- sqldf("select tgs.*, tp.teammate1, tp.teammate2, tgs2.grid as teammate1_grid, tgs3.grid as teammate2_grid
                    from 
                    team_grid_starts tgs 
@@ -89,7 +97,7 @@ qual_grid <- sqldf("select tgs.*, tp.teammate1, tp.teammate2, tgs2.grid as teamm
   distinct() %>% 
   mutate(teammate_grid = coalesce(teammate1_grid, teammate2_grid))
 
-## add teammate grid to f1_2020
+## add teammate qualifying to f1_2020
 f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teammate2, qg2.teammate2_grid
              from f1_2020 f 
              left join qual_grid qg
@@ -101,7 +109,6 @@ f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teamma
                 and f.constructor_name = qg2.constructor_name
                 and f.driver_name = qg2.driver_name") %>% 
   data.frame() %>% 
-  # mutate(teammate = coalesce(teammate1, teammate2), 
   mutate(teammate = ifelse(!is.na(teammate1_grid), teammate1, teammate2),
          teammate_grid = coalesce(teammate1_grid, teammate2_grid)) %>% 
   select(-teammate1, -teammate1_grid, -teammate2, -teammate2_grid) %>% 
