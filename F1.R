@@ -3,6 +3,8 @@ library(tidyverse)
 library(data.table)
 library(sqldf)
 library(RCurl)
+library(stringr)
+library(lubridate)
 
 ## CSV downloads
 # http://ergast.com/mrd/db/#csv
@@ -113,6 +115,17 @@ f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teamma
          teammate_grid = coalesce(teammate1_grid, teammate2_grid)) %>% 
   select(-teammate1, -teammate1_grid, -teammate2, -teammate2_grid) %>% 
   mutate(qual_win = ifelse(grid < teammate_grid, 1, 0))
+
+## make fastest lap ind 
+f1_master_data <- f1_master_data %>% 
+  mutate(fastest_lap_seconds = as.numeric(as.POSIXct(strptime(fastestLapTime, format = "%M:%OS"))) - 
+           as.numeric(as.POSIXct(strptime("0", format = "%S")))) %>% 
+  group_by(raceId) %>% 
+  mutate(fastest_lap_race = min(fastest_lap_seconds, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  data.frame() %>% 
+  mutate(fastest_lap_point = ifelse(fastest_lap_seconds == fastest_lap_race, 1, 0))
+
 
 ## write file
 # fwrite(f1_2020, "C:/Users/joshua.mark/Downloads/F1/f1_2020.csv")
