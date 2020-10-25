@@ -65,7 +65,14 @@ f1_2020 <- f1_2020 %>%
 ## qualifying results by driver per race 
 team_grid_starts <- f1_2020 %>% 
   select(race_dt = date, constructor_name, driver_name, grid) %>% 
-  arrange(race_dt)
+  arrange(race_dt) %>% 
+  data.table() %>% 
+  ##### FIX QUALIFYING RESULTS #####
+  .[race_dt == '2020-08-02' & driver_name == 'GEORGE RUSSELL', grid := 15] %>%  
+  .[race_dt == '2020-07-19' & driver_name == 'KEVIN MAGNUSSEN', grid := 16] %>% 
+  .[race_dt == '2020-07-19' & driver_name == 'ROMAIN GROSJEAN', grid := 18] %>% 
+  .[race_dt == '2020-07-12' & driver_name == 'ROMAIN GROSJEAN', grid := 20] %>% 
+  data.frame()
 
 ## lineups per team, drivers in each team 
 team_lineups <- team_grid_starts %>% select(constructor_name, driver_name) %>% distinct()
@@ -110,6 +117,12 @@ f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teamma
                 on f.date = qg2.race_dt 
                 and f.constructor_name = qg2.constructor_name
                 and f.driver_name = qg2.driver_name") %>% 
+  data.frame() %>% 
+  data.table() %>% 
+  .[driver_name == 'GEORGE RUSSELL' & date == '2020-08-02', grid := 15] %>% 
+  .[driver_name == 'KEVIN MAGNUSSEN' & date == '2020-07-19', grid := 16] %>% 
+  .[driver_name == 'ROMAIN GROSJEAN' & date == '2020-07-19', grid := 18] %>% 
+  .[driver_name == 'ROMAIN GROSJEAN' & date == '2020-07-12', grid := 20] %>% 
   data.frame() %>% 
   mutate(teammate = ifelse(!is.na(teammate1_grid), teammate1, teammate2),
          teammate_grid = coalesce(teammate1_grid, teammate2_grid)) %>% 
