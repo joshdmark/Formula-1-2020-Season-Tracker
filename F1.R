@@ -72,6 +72,8 @@ team_grid_starts <- f1_2020 %>%
   .[race_dt == '2020-07-19' & driver_name == 'KEVIN MAGNUSSEN', grid := 16] %>% 
   .[race_dt == '2020-07-19' & driver_name == 'ROMAIN GROSJEAN', grid := 18] %>% 
   .[race_dt == '2020-07-12' & driver_name == 'ROMAIN GROSJEAN', grid := 20] %>% 
+  .[race_dt == '2020-11-15' & driver_name == 'GEORGE RUSSELL', grid := 18] %>% ## Turkish GP fix
+  .[race_dt == '2020-11-15' & driver_name == 'NICHOLAS LATIFI', grid := 20] %>% ## Turkish GP fix
   data.frame()
 
 ## lineups per team, drivers in each team 
@@ -123,6 +125,8 @@ f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teamma
   .[driver_name == 'KEVIN MAGNUSSEN' & date == '2020-07-19', grid := 16] %>% 
   .[driver_name == 'ROMAIN GROSJEAN' & date == '2020-07-19', grid := 18] %>% 
   .[driver_name == 'ROMAIN GROSJEAN' & date == '2020-07-12', grid := 20] %>% 
+  .[driver_name == 'GEORGE RUSSELL' & date == '2020-11-15', grid := 18] %>% ## Turkish GP fix
+  .[driver_name == 'NICHOLAS LATIFI' & date == '2020-11-15', grid := 20] %>% ## Turkish GP fix
   data.frame() %>% 
   mutate(teammate = ifelse(!is.na(teammate1_grid), teammate1, teammate2),
          teammate_grid = coalesce(teammate1_grid, teammate2_grid)) %>% 
