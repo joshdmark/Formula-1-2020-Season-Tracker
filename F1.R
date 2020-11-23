@@ -3,7 +3,7 @@ library(tidyverse)
 library(data.table)
 library(sqldf)
 library(RCurl)
-library(stringr)
+library(stringr) 
 library(lubridate)
 
 ## CSV downloads
