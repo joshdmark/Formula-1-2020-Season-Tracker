@@ -17,12 +17,14 @@ status <- fread('https://raw.githubusercontent.com/joshdmark/Formula-1-2020-Seas
 drivers <- fread('https://raw.githubusercontent.com/joshdmark/Formula-1-2020-Season-Tracker/master/data/drivers.csv')
 constructors <- fread('https://raw.githubusercontent.com/joshdmark/Formula-1-2020-Season-Tracker/master/data/constructors.csv')
 
+## change date format of 'date' column in races df
+races$date <- ymd(races$date)
 
 ## combine races and circuits
 races <- sqldf("select r.*, c.circuitRef, c.name as circuit_name, c.location as circuit_location, 
               c.country as circuit_country, c.lat as circuit_lat, c.lng as circuit_lon, c.alt as circuit_altitude 
              from races r 
-             left join circuits c on r.circuitID = c.circuitID")
+             left join circuits c on r.circuitId = c.circuitId")
 
 ## remove circuits for space
 rm(circuits)
@@ -68,7 +70,7 @@ team_grid_starts <- f1_2020 %>%
   arrange(race_dt) %>% 
   data.table() %>% 
   ##### FIX QUALIFYING RESULTS #####
-  .[race_dt == '2020-08-02' & driver_name == 'GEORGE RUSSELL', grid := 15] %>%  
+.[race_dt == '2020-08-02' & driver_name == 'GEORGE RUSSELL', grid := 15] %>%  
   .[race_dt == '2020-07-19' & driver_name == 'KEVIN MAGNUSSEN', grid := 16] %>% 
   .[race_dt == '2020-07-19' & driver_name == 'ROMAIN GROSJEAN', grid := 18] %>% 
   .[race_dt == '2020-07-12' & driver_name == 'ROMAIN GROSJEAN', grid := 20] %>% 
@@ -85,12 +87,20 @@ team_pairings <- suppressWarnings(sqldf("select t1.*, t2.driver_name as d2
            left join team_lineups t2 
            on t1.constructor_name = t2.constructor_name
            where t1.driver_name <> t2.driver_name") %>% 
-  data.frame() %>% 
-  arrange(constructor_name) %>% 
-  group_by(constructor_name, driver_name) %>% 
-  summarise(teammates = toString(d2)) %>% 
-  data.frame() %>% 
-  separate(teammates, into = c('teammate1', 'teammate2'), sep = ', '))
+                                    data.frame() %>% 
+                                    arrange(constructor_name) %>% 
+                                    group_by(constructor_name, driver_name) %>% 
+                                    summarise(teammates = toString(d2)) %>% 
+                                    data.frame() %>% 
+                                    separate(teammates, into = c('teammate1', 'teammate2'), sep = ', '))
+## adjust Mercedes team pairings
+team_pairings <- team_pairings %>% 
+  data.table %>% 
+  .[driver_name == 'VALTTERI BOTTAS', 
+    `:=` (teammate1 = 'LEWIS HAMILTON', teammate2 = 'GEORGE RUSSELL')] %>% 
+  .[driver_name == 'LEWIS HAMILTON', 
+    `:=` (teammate1 = 'VALTTERI BOTTAS', teammate2 = 'GEORGE RUSSELL')] %>% 
+  data.frame()
 
 ## add teammates to data 
 qual_grid <- sqldf("select tgs.*, tp.teammate1, tp.teammate2, tgs2.grid as teammate1_grid, tgs3.grid as teammate2_grid
@@ -135,7 +145,8 @@ f1_master_data <- sqldf("select f.*, qg.teammate1, qg.teammate1_grid, qg2.teamma
 
 ## make fastest lap ind 
 f1_master_data <- f1_master_data %>% 
-  mutate(fastest_lap_seconds = as.numeric(as.POSIXct(strptime(fastestLapTime, format = "%M:%OS"))) - 
+  mutate(fastest_lap_seconds = 
+           as.numeric(as.POSIXct(strptime(fastestLapTime, format = "%M:%OS"))) - 
            as.numeric(as.POSIXct(strptime("0", format = "%S")))) %>% 
   group_by(raceId) %>% 
   mutate(fastest_lap_race = min(fastest_lap_seconds, na.rm = TRUE)) %>% 
@@ -143,9 +154,13 @@ f1_master_data <- f1_master_data %>%
   data.frame() %>% 
   mutate(fastest_lap_point = ifelse(fastest_lap_seconds == fastest_lap_race, 1, 0))
 
+## adjust BOTTAS Sakhir GP  
+f1_master_data <- f1_master_data %>%
+  data.table() %>% 
+  .[driver_code == 'BOT' & date == '2020-12-06', 
+    `:=` (teammate = 'GEORGE RUSSELL', teammate_grid = 2, qual_win = 1)]
 
 ## write file
+fwrite(f1_master_data, "Documents/Sports/F1/f1_2020.csv")
 # fwrite(f1_2020, "C:/Users/joshua.mark/Downloads/F1/f1_2020.csv")
-fwrite(f1_master_data, "C:/Users/joshua.mark/Downloads/F1/f1_2020.csv")
-
-
+# fwrite(f1_master_data, "C:/Users/joshua.mark/Downloads/F1/f1_2020.csv")
